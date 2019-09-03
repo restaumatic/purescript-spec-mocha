@@ -46,3 +46,20 @@ exports.describe = function (only) {
         };
     };
 };
+
+exports.afterAsync = function (name) {
+  "use strict";
+  return function (run) {
+    return function () {
+      after(name, function (done) {
+        return run(function () {
+          done();
+          return function () {};
+        })(function (err) {
+          done(err);
+          return function () {};
+        })();
+      });
+    };
+  };
+};

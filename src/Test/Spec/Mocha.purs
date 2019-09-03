@@ -4,11 +4,15 @@ module Test.Spec.Mocha (
   ) where
 
 import Prelude
-import Effect.Aff (Aff, Error, runAff_)
-import Effect (Effect)
-import Data.Either (either)
+
+import Data.Either (Either(..), either)
 import Data.Foldable (traverse_)
-import Test.Spec (Spec, Group(..), collect)
+import Data.Maybe (Maybe(..))
+import Data.Newtype (unwrap)
+import Effect (Effect)
+import Effect.Aff (Error, runAff_)
+import Test.Spec (Spec, collect)
+import Test.Spec.Tree (Item(..), Tree(..))
 
 foreign import data MOCHA :: Type
 
@@ -30,20 +34,35 @@ foreign import describe
   -> Effect Unit
   -> Effect Unit
 
-registerGroup
-  :: Group (Aff Unit)
+foreign import afterAsync
+  :: String
+  -> (Effect Unit
+      -> (Error -> Effect Unit)
+      -> Effect Unit)
   -> Effect Unit
-registerGroup (It only name test) =
-  itAsync only name cb
-  where
-    cb onSuccess onError =
-      runAff_ (either onError (const onSuccess)) test
-registerGroup (Pending name) = itPending name
-registerGroup (Describe only name groups) =
-  describe only name (traverse_ registerGroup groups)
 
 runMocha
-  :: forall e
-   . Spec Unit
+  :: Spec Unit
   -> Effect Unit
-runMocha spec = traverse_ registerGroup (collect spec)
+runMocha spec = traverse_ register $ unwrap $ collect spec
+  where
+  register =
+    case _ of
+
+      Node (Left groupName) tests ->
+        describe false groupName (traverse_ register tests)
+
+      Node (Right afterAction) tests ->
+        describe false "" do
+          afterAsync "" \onSuccess onError ->
+            runAff_ (either onError (const onSuccess)) $
+              afterAction unit
+          traverse_ register tests
+
+      Leaf name Nothing ->
+        itPending name
+
+      Leaf name (Just (Item item)) ->
+        itAsync false name \onSuccess onError ->
+          runAff_ (either onError (const onSuccess)) $
+            item.example (_ $ unit)

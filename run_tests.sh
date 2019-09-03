@@ -24,6 +24,7 @@ test_single() {
     fi
 }
 
-test_single "2 passing"
+test_single "4 passing"
 test_single "1 pending"
 test_single "2 failing"
+test_single "this runs once after the block"

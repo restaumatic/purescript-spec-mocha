@@ -3,7 +3,7 @@
 set -e
 
 mkdir -p output
-pulp browserify -I test --main Test.Main --to output/bundle.js
+spago bundle-app --main Test.Main --to output/bundle.js
 
 $(mocha output/bundle.js > output/test-output.txt) || echo "Checking test output..."
 

@@ -5,13 +5,13 @@ module Test.Spec.Mocha (
 
 import Prelude
 
-import Data.Either (Either(..), either)
-import Data.Foldable (traverse_)
-import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Effect (Effect)
 import Effect.Aff (Error, runAff_)
 import Test.Spec (Spec, collect)
+import Data.Either (either, Either(..))
+import Data.Foldable (traverse_)
+import Data.Maybe (Maybe(..))
+import Effect (Effect)
 import Test.Spec.Tree (Item(..), Tree(..))
 
 foreign import data MOCHA :: Type
